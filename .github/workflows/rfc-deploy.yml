@@ -1,0 +1,65 @@
+name: 🚀 RFC CI/CD Pipeline
+
+on:
+  repository_dispatch:
+    types: [rfc-deploy]
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Notify Build Started
+        run: |
+          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"IN_PROGRESS\",\"buildStatus\":\"in-progress\",\"testStatus\":\"pending\",\"deployStatus\":\"pending\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+
+      - name: Build
+        run: npm run build
+
+      - name: Notify Tests Started
+        run: |
+          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"IN_PROGRESS\",\"buildStatus\":\"success\",\"testStatus\":\"in-progress\",\"deployStatus\":\"pending\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Notify Deploy Started
+        run: |
+          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"IN_PROGRESS\",\"buildStatus\":\"success\",\"testStatus\":\"success\",\"deployStatus\":\"in-progress\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+
+      - name: Deploy
+        run: echo "Deployed!"
+
+      - name: Notify Success
+        if: success()
+        run: |
+          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"SUCCESS\",\"buildStatus\":\"success\",\"testStatus\":\"success\",\"deployStatus\":\"success\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"FAILURE\",\"buildStatus\":\"failure\",\"testStatus\":\"failure\",\"deployStatus\":\"failure\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
