@@ -20,9 +20,9 @@ jobs:
 
       - name: Notify Build Started
         run: |
-          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+          curl -s -X POST "${{ github.event.client_payload.callbackUrl }}" \
             -H "Content-Type: application/json" \
-            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
             -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"IN_PROGRESS\",\"buildStatus\":\"in-progress\",\"testStatus\":\"pending\",\"deployStatus\":\"pending\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
       - name: Build
@@ -30,9 +30,9 @@ jobs:
 
       - name: Notify Tests Started
         run: |
-          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+          curl -s -X POST "${{ github.event.client_payload.callbackUrl }}" \
             -H "Content-Type: application/json" \
-            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
             -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"IN_PROGRESS\",\"buildStatus\":\"success\",\"testStatus\":\"in-progress\",\"deployStatus\":\"pending\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
       - name: Run Tests
@@ -40,9 +40,9 @@ jobs:
 
       - name: Notify Deploy Started
         run: |
-          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+          curl -s -X POST "${{ github.event.client_payload.callbackUrl }}" \
             -H "Content-Type: application/json" \
-            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
             -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"IN_PROGRESS\",\"buildStatus\":\"success\",\"testStatus\":\"success\",\"deployStatus\":\"in-progress\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
       - name: Deploy
@@ -51,15 +51,15 @@ jobs:
       - name: Notify Success
         if: success()
         run: |
-          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+          curl -s -X POST "${{ github.event.client_payload.callbackUrl }}" \
             -H "Content-Type: application/json" \
-            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
             -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"SUCCESS\",\"buildStatus\":\"success\",\"testStatus\":\"success\",\"deployStatus\":\"success\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
 
       - name: Notify Failure
         if: failure()
         run: |
-          curl -s -X POST "${{ secrets.RFC_CALLBACK_URL }}" \
+          curl -s -X POST "${{ github.event.client_payload.callbackUrl }}" \
             -H "Content-Type: application/json" \
-            -H "X-RFC-Secret: ${{ secrets.RFC_WEBHOOK_SECRET }}" \
+            -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
             -d "{\"releaseId\":\"${{ github.event.client_payload.releaseId }}\",\"projectId\":\"${{ github.event.client_payload.projectId }}\",\"status\":\"FAILURE\",\"buildStatus\":\"failure\",\"testStatus\":\"failure\",\"deployStatus\":\"failure\",\"githubRunUrl\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
